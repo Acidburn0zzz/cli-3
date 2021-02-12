@@ -2,11 +2,11 @@ package camel
 
 import (
 	"github.com/ActiveState/cli/pkg/platform/runtime2/build"
-	"github.com/ActiveState/cli/pkg/platform/runtime2/setup"
+	"github.com/ActiveState/cli/pkg/platform/runtime2/rterrs"
 )
 
-var _ setup.Setuper = &Setup{}
-var _ setup.ArtifactSetuper = &ArtifactSetup{}
+//var _ setup.Setuper = &Setup{}
+//var _ setup.ArtifactSetuper = &ArtifactSetup{}
 
 type Setup struct {
 }
@@ -16,7 +16,7 @@ func NewSetup() *Setup {
 }
 
 func (s *Setup) PostInstall() error {
-	panic("implement me")
+	return rterrs.NotImplemented
 }
 
 type ArtifactSetup struct {
@@ -27,17 +27,17 @@ func NewArtifactSetup(artifactID build.ArtifactID) *ArtifactSetup {
 }
 
 func (as *ArtifactSetup) NeedsSetup() bool {
-	panic("implement me")
+	return true
 }
 
 func (as *ArtifactSetup) Move(from string) error {
-	panic("implement me")
+	return rterrs.NotImplemented
 }
 
 func (as *ArtifactSetup) MetaDataCollection() error {
-	panic("implement me")
+	return rterrs.NotImplemented
 }
 
 func (as *ArtifactSetup) Relocate() error {
-	panic("implement me")
+	return rterrs.NotImplemented
 }
