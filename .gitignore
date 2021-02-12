@@ -1,4 +1,5 @@
 build
+!pkg/platform/**/build
 debug
 debug.test
 internal/constants/generated.go
