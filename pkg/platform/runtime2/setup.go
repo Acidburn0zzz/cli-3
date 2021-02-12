@@ -27,15 +27,15 @@ type ClientProvider interface {
 	BuildLog(msgHandler buildlogstream.MessageHandler, recipe *inventory_models.Recipe) (build.Logger, error)
 }
 
-// Setuper is the interface for an implementation of runtime setup functions
+// BuildInstaller is the interface for an implementation of runtime setup functions
 // These need to be specialized for each BuildEngine type
-type Setuper interface {
+type BuildInstaller interface {
 	PostInstall() error
 }
 
-// ArtifactSetuper is the interface for an implementation of artifact setup functions
+// ArtifactInstaller is the interface for an implementation of artifact setup functions
 // These need to be specialized for each BuildEngine type
-type ArtifactSetuper interface {
+type ArtifactInstaller interface {
 	NeedsSetup() bool
 	Move(tmpInstallDir string) error
 	MetaDataCollection() error
@@ -49,21 +49,30 @@ const maxConcurrency = 3
 type Setup struct {
 	client     ClientProvider
 	msgHandler build.MessageHandler
+	r          *Runtime
+	p          *project.Project
 }
 
 // New returns a new Setup instance that can install a Runtime locally on the machine.
 func NewSetup(project *project.Project, msgHandler build.MessageHandler, api ClientProvider) *Setup {
-	panic("implement me")
+	return &Setup{
+		client:     api,
+		msgHandler: msgHandler,
+		p:          project,
+	}
 }
 
 // InstalledRuntime returns a locally installed Runtime instance.
 //
 // If the runtime cannot be initialized a NotInstalledError is returned.
 func (s *Setup) InstalledRuntime() (*Runtime, error) {
+	if s.r != nil { // maybe not this, and just refresh from local
+		return s.r, nil
+	}
 	// check if complete installation can be found locally or:
+	// set as "r" field and return or
 	//   return ErrNotInstalled
-	// next: try to load from local installation
-	return nil, rterrs.NotImplemented
+	return nil, ErrNotInstalled
 }
 
 // InstallRuntime installs the runtime locally, such that it can be retrieved with the InstalledRuntime function afterwards.
@@ -81,8 +90,7 @@ func (s *Setup) InstallRuntime() error {
 	}
 
 	// Create the setup implementation based on the build engine (alternative or camel)
-	var setupImpl Setuper
-	setupImpl = s.selectSetupImplementation(buildResult.Engine)
+	installer := s.selectInstaller(buildResult.Engine)
 
 	// Compute and handle the change summary
 	artifacts := build.MakeArtifactsFromRecipe(buildResult.Recipe)
@@ -106,7 +114,7 @@ func (s *Setup) InstallRuntime() error {
 			defer wg.Done()
 			for a := range ready {
 				// setup
-				s.setupArtifact(buildResult.Engine, a)
+				s.installArtifact(buildResult.Engine, a)
 			}
 		}()
 	}
@@ -117,9 +125,22 @@ func (s *Setup) InstallRuntime() error {
 		return err
 	}
 
-	setupImpl.PostInstall()
+	installer.PostInstall()
 
-	return rterrs.NotImplemented
+	// this area is feeling strange - passing the project around like this feels odd
+	envProvider, err := s.selectEnvProvider(s.p, buildResult.Engine)
+	if err != nil {
+		return err
+	}
+
+	r, err := New(s.p, envProvider)
+	if err != nil {
+		return err
+	}
+
+	s.r = r
+
+	return nil
 }
 
 func (s *Setup) InstallUninstalled(r *Runtime, err error) (*Runtime, error) {
@@ -132,10 +153,10 @@ func (s *Setup) InstallUninstalled(r *Runtime, err error) (*Runtime, error) {
 	return s.InstalledRuntime()
 }
 
-// setupArtifact sets up artifact
+// installArtifact sets up artifact
 // The artifact is downloaded, unpacked and then processed by the artifact setup implementation
-func (s *Setup) setupArtifact(buildEngine build.Engine, a build.ArtifactID) {
-	as := s.selectArtifactSetupImplementation(buildEngine, a)
+func (s *Setup) installArtifact(buildEngine build.Engine, a build.ArtifactID) {
+	as := s.selectArtifactInstaller(buildEngine, a)
 	if !as.NeedsSetup() {
 		return
 	}
@@ -166,16 +187,29 @@ func (s *Setup) unpackTarball(tarballPath string) string {
 	panic("implement me")
 }
 
-func (s *Setup) selectSetupImplementation(buildEngine build.Engine) Setuper {
+func (s *Setup) selectInstaller(buildEngine build.Engine) BuildInstaller {
 	if buildEngine == build.Alternative {
 		return alternative.NewSetup()
 	}
 	panic("implement me")
 }
 
-func (s *Setup) selectArtifactSetupImplementation(buildEngine build.Engine, a build.ArtifactID) ArtifactSetuper {
+func (s *Setup) selectArtifactInstaller(buildEngine build.Engine, a build.ArtifactID) ArtifactInstaller {
 	if buildEngine == build.Alternative {
 		return alternative.NewArtifactSetup(a)
 	}
 	panic("implement me")
+}
+
+func (s *Setup) selectEnvProvider(proj *project.Project, eng build.Engine) (EnvProvider, error) {
+	switch eng {
+	case build.Alternative:
+		a, err := alternative.New(proj)
+		if err != nil {
+			return nil, err
+		}
+		return a, nil
+	default:
+		return nil, rterrs.NotImplemented
+	}
 }
