@@ -1,9 +1,9 @@
-package client
+package apiclient
 
 import (
 	"github.com/ActiveState/cli/pkg/platform/api/buildlogstream"
 	"github.com/ActiveState/cli/pkg/platform/api/inventory/inventory_models"
-	"github.com/ActiveState/cli/pkg/platform/runtime2/model"
+	"github.com/ActiveState/cli/pkg/platform/runtime2/build"
 )
 
 // var _ model.ClientProvider = &Default{}
@@ -20,10 +20,10 @@ func (d *Default) Solve() (*inventory_models.Order, error) {
 	panic("implement me")
 }
 
-func (d *Default) Build(order *inventory_models.Order) (*model.BuildResult, error) {
+func (d *Default) Build(order *inventory_models.Order) (*build.Result, error) {
 	panic("implement me")
 }
 
-func (d *Default) BuildLog(msgHandler buildlogstream.MessageHandler, recipe *inventory_models.Recipe) (model.BuildLogger, error) {
+func (d *Default) BuildLog(msgHandler buildlogstream.MessageHandler, recipe *inventory_models.Recipe) (build.Logger, error) {
 	panic("implement me")
 }

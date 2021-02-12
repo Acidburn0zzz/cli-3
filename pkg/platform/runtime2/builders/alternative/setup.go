@@ -1,11 +1,11 @@
 package alternative
 
 import (
-	runtime "github.com/ActiveState/cli/pkg/platform/runtime2"
+	"github.com/ActiveState/cli/pkg/platform/runtime2/build"
 )
 
-// var _ common.Setuper = &Setup{}
-// var _ common.ArtifactSetuper = &ArtifactSetup{}
+//var _ setup.Setuper = &Setup{}
+//var _ setup.ArtifactSetuper = &ArtifactSetup{}
 
 type Setup struct {
 }
@@ -17,7 +17,7 @@ func NewSetup() *Setup {
 	return &Setup{}
 }
 
-func NewArtifactSetup(artifactID runtime.ArtifactID) *ArtifactSetup {
+func NewArtifactSetup(artifactID build.ArtifactID) *ArtifactSetup {
 	return &ArtifactSetup{}
 }
 

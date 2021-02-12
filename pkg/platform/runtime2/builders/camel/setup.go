@@ -1,28 +1,29 @@
 package camel
 
 import (
-	runtime "github.com/ActiveState/cli/pkg/platform/runtime2"
+	"github.com/ActiveState/cli/pkg/platform/runtime2/build"
+	"github.com/ActiveState/cli/pkg/platform/runtime2/setup"
 )
 
-// var _ common.Setuper = &Setup{}
-// var _ common.ArtifactSetuper = &ArtifactSetup{}
+var _ setup.Setuper = &Setup{}
+var _ setup.ArtifactSetuper = &ArtifactSetup{}
 
 type Setup struct {
-}
-
-type ArtifactSetup struct {
 }
 
 func NewSetup() *Setup {
 	return &Setup{}
 }
 
-func NewArtifactSetup(artifactID runtime.ArtifactID) *ArtifactSetup {
-	return &ArtifactSetup{}
-}
-
 func (s *Setup) PostInstall() error {
 	panic("implement me")
+}
+
+type ArtifactSetup struct {
+}
+
+func NewArtifactSetup(artifactID build.ArtifactID) *ArtifactSetup {
+	return &ArtifactSetup{}
 }
 
 func (as *ArtifactSetup) NeedsSetup() bool {
